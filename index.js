@@ -25,23 +25,29 @@ client.once('ready', () => {
     console.log(`✅ Logged in as ${client.user.tag}`);
 });
 
-client.on('messageReactionAdd', async (reaction, user) => {
+async function handleReaction(reaction, user, type) {
     if (user.bot) return;
 
-    // Fetch partials if needed
     if (reaction.partial) await reaction.fetch();
     if (reaction.message.partial) await reaction.message.fetch();
-
-    // Only care about the specific tracked message
     if (reaction.message.id !== MESSAGE_ID) return;
 
     const option = emojiToOption[reaction.emoji.name];
     if (!option) return;
 
     const notifyChannel = await client.channels.fetch(CHANNEL_ID);
-    if (notifyChannel?.isTextBased()) {
-        notifyChannel.send(`<@${user.id}> has selected **${option}**`);
-    }
+    if (!notifyChannel?.isTextBased()) return;
+
+    const action = type === 'add' ? 'selected' : 'unselected';
+    notifyChannel.send(`<@${user.id}> has ${action} **${option}**`);
+}
+
+client.on('messageReactionAdd', (reaction, user) => {
+    handleReaction(reaction, user, 'add');
+});
+
+client.on('messageReactionRemove', (reaction, user) => {
+    handleReaction(reaction, user, 'remove');
 });
 
 client.login(TOKEN);
