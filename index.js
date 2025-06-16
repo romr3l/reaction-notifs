@@ -6,15 +6,13 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMessageReactions
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.Reaction]
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User]
 });
 
-// 🔐 ENV VARIABLES (Set in Railway)
 const TOKEN = process.env.BOT_TOKEN;
 const MESSAGE_ID = process.env.WATCHED_MESSAGE_ID;
 const CHANNEL_ID = process.env.NOTIFICATION_CHANNEL_ID;
 
-// ✅ Reaction to Department Mapping
 const emojiToOption = {
     'one': 'Staffing Department',
     'two': 'Relations Department',
@@ -26,20 +24,28 @@ client.once('ready', () => {
 });
 
 async function handleReaction(reaction, user, type) {
-    if (user.bot) return;
+    try {
+        if (user.bot) return;
 
-    if (reaction.partial) await reaction.fetch();
-    if (reaction.message.partial) await reaction.message.fetch();
-    if (reaction.message.id !== MESSAGE_ID) return;
+        if (reaction.partial) await reaction.fetch();
+        if (reaction.message.partial) await reaction.message.fetch();
 
-    const option = emojiToOption[reaction.emoji.name];
-    if (!option) return;
+        console.log(`[${type.toUpperCase()}] emoji.name =`, reaction.emoji.name);
+        console.log(`[${type.toUpperCase()}] message.id =`, reaction.message.id);
 
-    const notifyChannel = await client.channels.fetch(CHANNEL_ID);
-    if (!notifyChannel?.isTextBased()) return;
+        if (reaction.message.id !== MESSAGE_ID) return;
 
-    const action = type === 'add' ? 'selected' : 'unselected';
-    notifyChannel.send(`<@${user.id}> has ${action} **${option}**`);
+        const option = emojiToOption[reaction.emoji.name];
+        if (!option) return;
+
+        const notifyChannel = await client.channels.fetch(CHANNEL_ID);
+        if (!notifyChannel?.isTextBased()) return;
+
+        const action = type === 'add' ? 'selected' : 'unselected';
+        notifyChannel.send(`<@${user.id}> has ${action} **${option}**`);
+    } catch (err) {
+        console.error(`❌ Error handling ${type} reaction:`, err);
+    }
 }
 
 client.on('messageReactionAdd', (reaction, user) => {
@@ -51,3 +57,4 @@ client.on('messageReactionRemove', (reaction, user) => {
 });
 
 client.login(TOKEN);
+
