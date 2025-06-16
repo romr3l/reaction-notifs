@@ -16,9 +16,9 @@ const CHANNEL_ID = process.env.NOTIFICATION_CHANNEL_ID;
 
 // ✅ Reaction to Department Mapping
 const emojiToOption = {
-    '1️⃣': 'Staffing Department',
-    '2️⃣': 'Relations Department',
-    '3️⃣': 'Recruitment Department'
+    'one': 'Staffing Department',
+    'two': 'Relations Department',
+    'three': 'Recruitment Department'
 };
 
 client.once('ready', () => {
